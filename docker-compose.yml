@@ -1,0 +1,20 @@
+# Local infrastructure: SQL Server (database + real-DB integration tests) and Redis (Day 9).
+# Copy .env.example to .env and set MSSQL_SA_PASSWORD before running `docker compose up -d`.
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD in .env}
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  sqlserver-data:

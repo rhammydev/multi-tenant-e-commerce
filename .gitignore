@@ -3,4 +3,7 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+.env
+App_Data/
+*.user
 docs/
