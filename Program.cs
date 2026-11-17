@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using ECommerce.Data;
+using ECommerce.Domain.Settings;
 using ECommerce.DTOs.Generic;
 using ECommerce.Extensions;
 using ECommerce.Filters;
@@ -7,6 +8,7 @@ using ECommerce.Middleware;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -38,6 +40,7 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddRepositories();
 builder.Services.AddApplicationServices(builder.Configuration);
+builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddSwaggerWithJwt();
 builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database");
 
@@ -53,10 +56,25 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 app.MapHealthChecks("/health");
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    if (context.Database.IsRelational())
+        await context.Database.MigrateAsync();
+    else
+        await context.Database.EnsureCreatedAsync();
+
+    await DbSeeder.SeedAsync(context,
+        scope.ServiceProvider.GetRequiredService<IOptions<SeedSettings>>().Value,
+        scope.ServiceProvider.GetRequiredService<ILogger<Program>>());
+}
 
 app.Run();
 

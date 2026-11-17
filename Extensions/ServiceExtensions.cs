@@ -1,17 +1,21 @@
+using ECommerce.Domain.Settings;
+using ECommerce.Services.Implementations;
+using ECommerce.Services.Interfaces;
+
 namespace ECommerce.Extensions;
 
 public static class ServiceExtensions
 {
-    /// Business services, settings and hosted worker
     public static IServiceCollection AddApplicationServices(this IServiceCollection services,
         IConfiguration configuration)
     {
-        return services;
-    }
+        services.Configure<AuthSettings>(configuration.GetSection("Auth"));
+        services.Configure<SeedSettings>(configuration.GetSection("Seed"));
 
-    /// Repositories
-    public static IServiceCollection AddRepositories(this IServiceCollection services)
-    {
+        services.AddSingleton<ITokenService, TokenService>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IUserService, UserService>();
+
         return services;
     }
 }
